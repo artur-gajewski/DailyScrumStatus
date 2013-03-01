@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]><html class="no-js lt-ie9 lt-ie8 lt-ie7"><![endif]-->
+<!--[if IE 7]><html class="no-js lt-ie9 lt-ie8"><![endif]-->
+<!--[if IE 8]><html class="no-js lt-ie9"><![endif]-->
+<!--[if gt IE 8]><!--><html class="no-js"><!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>Daily Scrum Status</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width">
+
+        <link rel="stylesheet" href="{{ path('home') }}css/normalize.min.css">
+        <link rel="stylesheet" href="{{ path('home') }}css/main.css">
+        <link rel="stylesheet" href="{{ path('home') }}css/jquery-ui.css">
+
+        <script src="{{ path('home') }}js/vendor/modernizr-2.6.2-respond-1.1.0.min.js"></script>
+        <script src="{{ path('home') }}js/vendor/jquery-1.9.1.js"></script>
+        <script src="{{ path('home') }}js/vendor/jquery-ui.js"></script>
+        <script src="{{ path('home') }}js/vendor/cycle.js"></script>
+        <script src="{{ path('home') }}js/main.js"></script>
+
+        <script type="text/javascript">
+            $(document).ready(function(){
+                var today = new Date();
+                var dd = today.getDate();
+                var mm = today.getMonth()+1;
+                var yyyy = today.getFullYear();
+
+                if(dd<10){dd='0'+dd}
+                if(mm<10){mm='0'+mm}
+
+                var currentDate = yyyy + "-" + mm + "-" + dd;
+
+                // Load entries for current day
+                $.ajax({
+                    type: "POST",
+                    url: "load",
+                    success: function(data)
+                    {
+                        $(".daily-title").html("&raquo; " + currentDate + " &laquo;");
+                        $("#entries").html(data);
+                    }
+                });
+
+                // Setup autocomplete for project input
+                $(function() {
+                    var availableTags = [
+                        {{ autocomplete|raw }}
+                    ];
+
+                    $( "#project" ).autocomplete({
+                        source: availableTags
+
+                    });
+                });
+
+                // Handle form submit
+                $("#submit-button").click(function() {
+                    var isFormValid = true;
+
+                    $("input").each(function(){
+                        if ($.trim($(this).val()).length == 0){
+                            isFormValid = false;
+                        }
+                    });
+
+                    $("textarea").each(function(){
+                        if ($.trim($(this).val()).length == 0){
+                            isFormValid = false;
+                        }
+                    });
+
+                    if (!isFormValid) {
+                        alert("Please fill in all fields!");
+                        return false;
+                    }
+
+                    // Do submit the form
+                    $.ajax({
+                        type: "POST",
+                        url: "save",
+                        data: $("#daily-data").serialize(),
+                        success: function(data)
+                        {
+                            $("#entries").html(data);
+                        }
+                    });
+
+                    $('#daily-data').each(function(){
+                        this.reset();
+                    });
+
+                    $("html, body").animate({ scrollTop: 0 }, "slow");
+
+                    return false;
+                });
+
+                // Handle archive link click
+                $(".archive-link").click(function() {
+                    var text = $(this).attr('id');
+                    $.ajax({
+                        type: "POST",
+                        url: "load",
+                        data: { date: text },
+                        success: function(data)
+                        {
+                            $(".daily-title").html("&raquo; " + text + " &laquo;");
+                            $("#entries").html(data);
+                        }
+                    });
+
+                    $("html, body").animate({ scrollTop: 0 }, "slow");
+
+                    return false;
+                });
+
+                // Scroll page to archives section
+                $("#goto-archives").click(function() {
+                    var offset = 60;
+                    var target = $("#archive-section").offset().top - offset;
+                    $('html, body').animate({scrollTop:target}, "slow");
+                    return false;
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <!--[if lt IE 7]>
+        <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
+        <![endif]-->
+
+        <!-- Top navigation -->
+        <div class="header-container">
+            <header class="wrapper clearfix">
+                <h1 class="title"><a class="home-link" href="{{ path('home') }}">Daily Scrum Status</a></h1>
+                <nav>
+                    <ul>
+                        <li><a href="{{ path('home') }}">Reload</a></li>
+                        <li><a id="goto-archives" href="#">Archives</a></li>
+                        <li><a href="{{ path('status') }}">Status</a></li>
+                    </ul>
+                </nav>
+            </header>
+        </div>
+
+        <!-- Main content -->
+        <div class="main-container">
+            <div class="main wrapper clearfix">
+
+                <article>
+                    <header>
+                        <h1 class="daily-title">&raquo; {{ "now"|date("Y-m-d") }} &laquo;</h1>
+                    </header>
+
+                    <section id="entries"></section>
+
+                    <!-- Input form -->
+                    <section id="add-daily">
+                        <form id="daily-data" name="daily-data">
+                            <h1 class="daily-add">Add your daily status:</h1>
+                            <div class="input-label">Name:</div>
+                            <div class="input-text"><input class="input-name" name="name"/></div>
+
+                            <div class="input-label">Project:</div>
+                            <div class="input-text"><input class="input-project" id="project" name="project"/></div>
+
+                            <div class="input-label">I am working on:</div>
+                            <div class="input-textarea"><textarea class="input-textarea" id="txt1" name="txt1"></textarea></div>
+                            <div class="spacer"/>
+                            <div class="input-label">Problems and obstacles:</div>
+                            <div class="input-textarea"><textarea class="input-textarea" id="txt2" name="txt2"></textarea></div>
+                            <input id="submit-button" type="button" value="Send"/>
+                        </form>
+                    </section>
+                </article>
+
+                <!-- Archives -->
+                <article id="archive-section">
+                    <header>
+                        <h1 class="archives-title">Archives</h1>
+                    </header>
+                    <section>
+                        <div>
+                            {% for link in archiveLinks %}
+                                <a class="archive-link" id="{{ link.id }}" href="#">{{ link.title }}</a>&nbsp;
+                            {% endfor %}
+                        </div>
+                    </section>
+                </article>
+
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer-container">
+            <footer class="wrapper">
+                <h3>Copyright &copy; {{ "now"|date("Y") }} - Artur Gajewski - Powered by Silex Framework</h3>
+            </footer>
+        </div>
+
+    </body>
+</html>
