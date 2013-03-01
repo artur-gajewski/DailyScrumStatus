@@ -5,6 +5,8 @@ Web app to save daily scrum information for team members. Minimal setup and no d
 
 Feature displays for developer's computer as well as office wide big screens.
 
+Demo: http://www.arturgajewski.com/scrum
+
 ## Installation
 
 Obtain Composer:
