@@ -5,7 +5,7 @@ require_once __DIR__ . '/vendor/autoload.php';
 $app = new Silex\Application();
 $today = date("Y-m-d");
 
-$app['debug'] = false;
+$app['debug'] = true;;
 
 // Register Twig
 $app->register(new Silex\Provider\TwigServiceProvider(), array(
@@ -20,7 +20,7 @@ $scrums = scandir(__DIR__ . '/database');
 if (isset($scrums)) {
     $archive = array();
     foreach ($scrums as $scrum) {
-        if ($scrum != '.' && $scrum != '..' && $scrum != 'projects') {
+        if ($scrum != '.' && $scrum != '..' && $scrum != 'projects' && $scrum != 'README.md') {
             $title = $scrum;
             if ($scrum == date("Y-m-d")) {
                 $title = 'Today';
@@ -59,7 +59,7 @@ $app->match('/', function () use ($app, $archiveLinks, $autocomplete) {
 $app->match('/status', function () use ($app, $today) {
     $file = $today;
 
-    $date = ($_POST['date']) ? $_POST['date'] : $_GET['date'];
+    $date = $app['request']->get('date');
 
     if ($date) {
         $file = $date;
@@ -93,10 +93,10 @@ $app->match('/count', function () use ($today) {
 ->bind('count');
 
 // Load scrum page
-$app->match('/load', function () use ($today) {
+$app->match('/load', function () use ($app, $today) {
     $file = $today;
 
-    $date = ($_POST['date']) ? $_POST['date'] : $_GET['date'];
+    $date = $app['request']->get('date');
 
     if ($date) {
         $file = $date;
@@ -112,11 +112,11 @@ $app->match('/load', function () use ($today) {
 ->bind('load');
 
 // Save scrum status entry
-$app->match('/save', function () use ($today) {
-    $name = ($_POST['name']) ? $_POST['name'] : $_GET['name'];
-    $project = ($_POST['project']) ? $_POST['project'] : $_GET['project'];
-    $txt1 = ($_POST['txt1']) ? $_POST['txt1'] : $_GET['txt1'];
-    $txt2 = ($_POST['txt2']) ? $_POST['txt2'] : $_GET['txt2'];
+$app->match('/save', function () use ($app, $today) {
+    $name    = $app['request']->get('name');
+    $project = $app['request']->get('project');
+    $txt1    = $app['request']->get('txt1');
+    $txt2    = $app['request']->get('txt2');
 
     $entryData = "<section class=\"entry\"><h2>$name @ $project</h2><p><b>I am working on: </b> $txt1</p><p><b>Problems: </b> $txt2</p></section>\n";
     $projectData = "$project\n";
